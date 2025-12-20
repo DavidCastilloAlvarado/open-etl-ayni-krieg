@@ -1,0 +1,106 @@
+name: Deploy ETL to Vertex AI
+
+on:
+  workflow_dispatch:
+    inputs:
+      etl_name:
+        description: 'Select ETL to deploy'
+        required: true
+        type: choice
+        options:
+          - myfirstETL
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+      tag:
+        description: 'Docker image tag (default: latest)'
+        required: false
+        default: 'latest'
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.etl_name }} to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    
+    # Require manual approval from repository owner
+    environment: 
+      name: ${{ inputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+      
+      - name: Set Environment Variables from Secrets
+        run: |
+          echo "GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_ENV
+          echo "GCP_REGION=${{ secrets.GCP_REGION }}" >> $GITHUB_ENV
+          echo "GCP_SERVICE_ACCOUNT=${{ secrets.GCP_SA_EMAIL }}" >> $GITHUB_ENV
+          echo "GCP_BUCKET=${{ secrets.GCP_BUCKET }}" >> $GITHUB_ENV
+          echo "CONTAINER_REGISTRY=${{ secrets.CONTAINER_REGISTRY }}" >> $GITHUB_ENV
+          echo "CONTAINER_REGISTRY_PROJECT=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_ENV
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+      
+      - name: Build Docker Image
+        run: |
+          echo "Building Docker image for ${{ inputs.etl_name }}"
+          cd etls/${{ inputs.etl_name }}
+          
+          IMAGE_NAME="${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_PROJECT}/${{ inputs.etl_name }}:${{ inputs.tag }}"
+          
+          echo "Image: ${IMAGE_NAME}"
+          docker build -t "${IMAGE_NAME}" .
+          
+          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
+      
+      - name: Push Docker Image
+        run: |
+          echo "Pushing image: ${IMAGE_NAME}"
+          docker push "${IMAGE_NAME}"
+      
+      - name: Install deployment dependencies
+        run: |
+          poetry install
+      
+      - name: Deploy to Vertex AI
+        run: |
+          echo "Deploying ${{ inputs.etl_name }} to Vertex AI (${{ inputs.environment }})"
+          poetry run python scripts/deploy.py \
+            --etl-name ${{ inputs.etl_name }} \
+            --environment ${{ inputs.environment }} \
+            --image "${IMAGE_NAME}"
+      
+      - name: Deployment Summary
+        run: |
+          echo "## Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**ETL:** ${{ inputs.etl_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ${IMAGE_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ inputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The ETL has been deployed to Vertex AI and scheduled according to its configuration." >> $GITHUB_STEP_SUMMARY

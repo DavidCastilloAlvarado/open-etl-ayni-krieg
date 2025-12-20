@@ -1,0 +1,153 @@
+name: PR Checks - Ruff Linting
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - 'etls/**/pyproject.toml'
+      - '.github/workflows/pr-checks.yml'
+
+jobs:
+  lint-root:
+    name: Lint Root Project
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Install dependencies
+        run: poetry install
+      
+      - name: Run Ruff on root project
+        run: poetry run poe ruff
+
+  lint-etls:
+    name: Lint ETL Projects
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Lint all ETLs
+        run: |
+          for etl_dir in etls/*/; do
+            if [ -f "$etl_dir/pyproject.toml" ]; then
+              echo "=========================================="
+              echo "Linting $(basename $etl_dir)"
+              echo "=========================================="
+              cd "$etl_dir"
+              poetry install
+              poetry run poe ruff || exit 1
+              cd ../..
+            fi
+          done
+
+  validate-configs:
+    name: Validate ETL Configurations
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install PyYAML
+        run: pip install pyyaml
+      
+      - name: Validate ETL configs
+        run: |
+          python3 << 'EOF'
+          import yaml
+          from pathlib import Path
+          import sys
+          
+          errors = []
+          etls_dir = Path("etls")
+          
+          for etl_dir in etls_dir.iterdir():
+              if not etl_dir.is_dir() or etl_dir.name.startswith("."):
+                  continue
+              
+              config_path = etl_dir / "resources" / "config.yaml"
+              if not config_path.exists():
+                  errors.append(f"Missing config.yaml in {etl_dir.name}")
+                  continue
+              
+              try:
+                  with open(config_path) as f:
+                      config = yaml.safe_load(f)
+                  
+                  required_keys = ["name", "schedule", "compute", "parameters", "gcp"]
+                  for key in required_keys:
+                      if key not in config:
+                          errors.append(f"{etl_dir.name}: Missing required key '{key}'")
+                  
+                  print(f"✅ {etl_dir.name}: Valid configuration")
+              
+              except Exception as e:
+                  errors.append(f"{etl_dir.name}: {str(e)}")
+          
+          if errors:
+              print("\n❌ Configuration errors found:")
+              for error in errors:
+                  print(f"  - {error}")
+              sys.exit(1)
+          
+          print("\n✅ All ETL configurations are valid!")
+          EOF
+
+  test-etls:
+    name: Test ETL Projects
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Test all ETLs
+        run: |
+          for etl_dir in etls/*/; do
+            if [ -f "$etl_dir/pyproject.toml" ]; then
+              echo "=========================================="
+              echo "Testing $(basename $etl_dir)"
+              echo "=========================================="
+              cd "$etl_dir"
+              poetry install
+              poetry run poe test || exit 1
+              cd ../..
+            fi
+          done
