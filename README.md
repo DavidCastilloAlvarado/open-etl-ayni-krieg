@@ -395,7 +395,20 @@ gcloud iam service-accounts add-iam-policy-binding ${SA_EMAIL} \
     --role="roles/iam.serviceAccountUser"
 ```
 
-#### 8. Link Service Account to Workload Identity Pool
+#### 8. Create KFP Artifact Registry Repository
+
+Create a repository for storing Kubeflow Pipeline artifacts:
+
+```bash
+export KFP_REPOSITORY="kfp-pipelines"
+
+gcloud artifacts repositories create ${KFP_REPOSITORY} \
+    --repository-format=KFP \
+    --location=us-central1 \
+    --description="Kubeflow Pipeline templates for ETL deployments"
+```
+
+#### 9. Link Service Account to Workload Identity Pool
 
 ```bash
 gcloud iam service-accounts add-iam-policy-binding ${SA_EMAIL} \
@@ -403,12 +416,16 @@ gcloud iam service-accounts add-iam-policy-binding ${SA_EMAIL} \
     --role="roles/iam.workloadIdentityUser"
 ```
 
-#### 9. Add to GitHub Secrets
+#### 10. Add to GitHub Secrets
 
 Go to your GitHub repository **Settings** → **Secrets and variables** → **Actions** and add:
 
+**Secrets:**
 - `WIF_PROVIDER`: `projects/${YOUR_PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-pool/providers/github-provider`
 - `GCP_SA_EMAIL`: `vertex-ai-etl@${YOUR_PROJECT_ID}.iam.gserviceaccount.com`
+
+**Variables:**
+- `KFP_REPOSITORY`: `kfp-pipelines`
 
 #### Cost Information
 
