@@ -72,20 +72,20 @@ jobs:
       
       - name: Build Docker Image
         run: |
-          echo "Building Docker image for ${{ inputs.etl_name }}"
           cd etls/${{ inputs.etl_name }}
           
-          IMAGE_NAME="${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_PROJECT}/${{ inputs.etl_name }}:${{ inputs.tag }}"
+          # Convert to lowercase for Docker compatibility
+          IMAGE_NAME=$(echo "${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_PROJECT}/${{ inputs.etl_name }}:${{ inputs.tag }}" | tr '[:upper:]' '[:lower:]')
           
-          echo "Image: ${IMAGE_NAME}"
           docker build -t "${IMAGE_NAME}" .
           
           echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
+          echo "✅ Docker image built successfully"
       
       - name: Push Docker Image
         run: |
-          echo "Pushing image: ${IMAGE_NAME}"
           docker push "${IMAGE_NAME}"
+          echo "✅ Docker image pushed successfully"
       
       - name: Install deployment dependencies
         run: |
