@@ -80,46 +80,7 @@ jobs:
         run: pip install pyyaml
       
       - name: Validate ETL configs
-        run: |
-          python3 << 'EOF'
-          import yaml
-          from pathlib import Path
-          import sys
-          
-          errors = []
-          etls_dir = Path("etls")
-          
-          for etl_dir in etls_dir.iterdir():
-              if not etl_dir.is_dir() or etl_dir.name.startswith("."):
-                  continue
-              
-              config_path = etl_dir / "resources" / "config.yaml"
-              if not config_path.exists():
-                  errors.append(f"Missing config.yaml in {etl_dir.name}")
-                  continue
-              
-              try:
-                  with open(config_path) as f:
-                      config = yaml.safe_load(f)
-                  
-                  required_keys = ["name", "schedule", "compute", "parameters", "gcp"]
-                  for key in required_keys:
-                      if key not in config:
-                          errors.append(f"{etl_dir.name}: Missing required key '{key}'")
-                  
-                  print(f"✅ {etl_dir.name}: Valid configuration")
-              
-              except Exception as e:
-                  errors.append(f"{etl_dir.name}: {str(e)}")
-          
-          if errors:
-              print("\n❌ Configuration errors found:")
-              for error in errors:
-                  print(f"  - {error}")
-              sys.exit(1)
-          
-          print("\n✅ All ETL configurations are valid!")
-          EOF
+        run: python .github/scripts/validate_etl_configs.py
 
   test-etls:
     name: Test ETL Projects
