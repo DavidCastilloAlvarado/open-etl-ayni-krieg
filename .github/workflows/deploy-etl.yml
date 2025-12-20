@@ -67,8 +67,11 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
       
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker
+      - name: Configure Docker Authentication
+        run: |
+          # Configure for both GCR and Artifact Registry
+          gcloud auth configure-docker
+          gcloud auth configure-docker us-docker.pkg.dev
       
       - name: Build Docker Image
         run: |
