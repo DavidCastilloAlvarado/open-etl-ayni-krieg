@@ -383,6 +383,11 @@ gcloud projects add-iam-policy-binding ${YOUR_PROJECT_ID} \
 gcloud projects add-iam-policy-binding ${YOUR_PROJECT_ID} \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/artifactregistry.writer"
+
+# Grant create-on-push permission (allows auto-creating repos on first push)
+gcloud projects add-iam-policy-binding ${YOUR_PROJECT_ID} \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/artifactregistry.createOnPushWriter"
 ```
 
 #### 8. Link Service Account to Workload Identity Pool
