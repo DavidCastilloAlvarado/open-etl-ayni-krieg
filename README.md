@@ -364,7 +364,7 @@ gcloud iam service-accounts create vertex-ai-etl \
 vertex-ai-etl@${YOUR_PROJECT_ID}.iam.gserviceaccount.com
 ```
 
-#### 7. Grant Permissions to Service Account - easy admin on storage
+#### 7. Grant Permissions to Service Account
 
 ```bash
 export SA_EMAIL="vertex-ai-etl@${YOUR_PROJECT_ID}.iam.gserviceaccount.com"
@@ -378,6 +378,11 @@ gcloud projects add-iam-policy-binding ${YOUR_PROJECT_ID} \
 gcloud projects add-iam-policy-binding ${YOUR_PROJECT_ID} \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/storage.admin"
+
+# Grant Artifact Registry permissions (for pushing Docker images)
+gcloud projects add-iam-policy-binding ${YOUR_PROJECT_ID} \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/artifactregistry.writer"
 ```
 
 #### 8. Link Service Account to Workload Identity Pool
