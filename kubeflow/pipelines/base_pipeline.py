@@ -46,7 +46,7 @@ def create_pipeline_for_etl(etl_name: str, image: str):
         name=config["name"],
         description=config.get("description", f"ETL Pipeline for {etl_name}"),
     )
-    def dynamic_pipeline(**kwargs):
+    def dynamic_pipeline(**kwargs: Any):
         """
         Dynamically generated pipeline
 
