@@ -49,7 +49,7 @@ def test_standardize_column():
 
     assert "value_standardized" in result.columns
     assert abs(result["value_standardized"].mean()) < 0.01  # Close to 0
-    assert abs(result["value_standardized"].std() - 1.0) < 0.01  # Close to 1
+    assert abs(result["value_standardized"].std(ddof=0) - 1.0) < 0.01  # Close to 1
 
 
 def test_normalize_column():
