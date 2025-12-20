@@ -18,7 +18,7 @@ poethepoet = "^0.29.0"
 pytest = "^8.3.0"
 
 [tool.poe.tasks]
-ruff.shell = "ruff check src/ tests/ --fix && ruff format src/ tests/"
+ruff.shell = "ruff check src/ tests/ && ruff format src/ tests/"
 run = "python src/pipeline.py"
 test = "pytest tests/"
 

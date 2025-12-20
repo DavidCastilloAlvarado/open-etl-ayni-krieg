@@ -17,7 +17,7 @@ poethepoet = "^0.29.0"
 pytest = "^8.3.0"
 
 [tool.poe.tasks]
-ruff.shell = "ruff check . --fix && ruff format ."
+ruff.shell = "ruff check . && ruff format ."
 test = "pytest tests/"
 list-etls = "python scripts/list_etls.py"
 
