@@ -26,6 +26,11 @@ jobs:
     name: Deploy ${{ inputs.etl_name }} to ${{ inputs.environment }}
     runs-on: ubuntu-latest
     
+    # Required for Workload Identity Federation
+    permissions:
+      contents: write
+      id-token: write
+    
     # Require manual approval from repository owner
     environment: 
       name: ${{ inputs.environment }}
@@ -104,3 +109,35 @@ jobs:
           echo "**Tag:** ${{ inputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The ETL has been deployed to Vertex AI and scheduled according to its configuration." >> $GITHUB_STEP_SUMMARY
+      
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RELEASE_TAG="${{ inputs.etl_name }}-${{ inputs.environment }}-${{ inputs.tag }}-$(date +%Y%m%d-%H%M%S)"
+          RELEASE_NAME="${{ inputs.etl_name }} - ${{ inputs.environment }} - ${{ inputs.tag }}"
+          
+          # Create release notes
+          cat > release_notes.md << EOF
+          ## ETL Deployment to Vertex AI
+          
+          **ETL Name:** ${{ inputs.etl_name }}
+          **Environment:** ${{ inputs.environment }}
+          **Docker Tag:** ${{ inputs.tag }}
+          **Deployed At:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Deployed By:** ${{ github.actor }}
+          
+          ### Deployment Details
+          - Pipeline deployed to Vertex AI Pipelines
+          - Scheduled execution configured
+          - Container image pushed to registry
+          
+          ### Links
+          - [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
+          
+          # Create release
+          gh release create "${RELEASE_TAG}" \
+            --title "${RELEASE_NAME}" \
+            --notes-file release_notes.md \
+            --target ${{ github.ref_name }}
