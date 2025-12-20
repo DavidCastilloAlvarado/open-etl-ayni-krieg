@@ -46,43 +46,43 @@ def create_pipeline_for_etl(etl_name: str, image: str):
         name=config["name"],
         description=config.get("description", f"ETL Pipeline for {etl_name}"),
     )
-    def dynamic_pipeline(**kwargs: Any):
+    def dynamic_pipeline():
         """
         Dynamically generated pipeline
-
-        Args:
-            **kwargs: Pipeline parameters from config
+        
+        All parameters are passed directly to the container from the ETL config.
         """
-        # Merge default params with provided kwargs
-        params = {**default_params, **kwargs}
-
         # Build container arguments from parameters
         arguments = []
-        for key, value in params.items():
+        for key, value in default_params.items():
             if key != "image":  # Skip image parameter
                 arguments.extend([f"--{key.replace('_', '-')}", str(value)])
 
-        # Create ETL task
-        etl_task = dsl.ContainerOp(
-            name=f"{etl_name}-task",
-            image=image,
-            arguments=arguments,
+        # Create ETL task using KFP v2 syntax
+        from kfp.dsl import container_component
+        
+        @container_component
+        def etl_component():
+            return dsl.ContainerSpec(
+                image=image,
+                command=["python", "src/pipeline.py"],
+                args=arguments,
+            )
+        
+        # Create and configure the task
+        etl_task = etl_component()
+        etl_task.set_cpu_limit(config["compute"]["cpu"])
+        etl_task.set_memory_limit(config["compute"]["memory"])
+        etl_task.set_retry(
+            num_retries=2,
+            backoff_duration="60s",
+            backoff_factor=2.0
         )
-
-        # Set resource limits
-        etl_task = etl_task.set_cpu_limit(config["compute"]["cpu"])
-        etl_task = etl_task.set_memory_limit(config["compute"]["memory"])
-
-        # Add retry policy
-        etl_task = etl_task.set_retry(num_retries=2, backoff_duration="60s", backoff_factor=2.0)
 
         # Set timeout if specified
         if "timeout" in config["compute"]:
-            etl_task = etl_task.set_timeout(config["compute"]["timeout"])
+            etl_task.set_timeout(config["compute"]["timeout"])
 
         return etl_task
-
-    # Set default parameter values for the pipeline
-    dynamic_pipeline.__defaults__ = tuple(default_params.values())
 
     return dynamic_pipeline
