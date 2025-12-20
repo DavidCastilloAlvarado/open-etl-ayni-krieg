@@ -145,25 +145,6 @@ jobs:
             --etl-name ${{ inputs.etl_name }} \
             --environment ${{ inputs.environment }} \
             --image "${IMAGE_NAME}"
-          
-          # Upload compiled pipeline to KFP Artifact Registry
-          PIPELINE_FILE="/tmp/${{ inputs.etl_name }}_pipeline.json"
-          KFP_REPO="${{ vars.KFP_REPOSITORY }}"
-          
-          if [ -f "$PIPELINE_FILE" ]; then
-            echo "Uploading pipeline to KFP Artifact Registry..."
-            VERSION=$(date -u +"%Y%m%d-%H%M%S")
-            
-            # Upload to KFP repository
-            gcloud artifacts files upload \
-              --location=${GCP_REGION} \
-              --repository=$KFP_REPO \
-              --source="$PIPELINE_FILE" \
-              --file="${{ inputs.etl_name }}/${VERSION}/pipeline.json" \
-              --quiet || echo "⚠️  Pipeline upload to registry failed (non-blocking)"
-            
-            echo "✅ Pipeline version $VERSION uploaded to Artifact Registry"
-          fi
       
       - name: Deployment Summary
         run: |
