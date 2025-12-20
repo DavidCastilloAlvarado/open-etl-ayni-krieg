@@ -49,7 +49,6 @@ def create_pipeline_for_etl(etl_name: str, image: str):
     def dynamic_pipeline():
         """
         Dynamically generated pipeline
-        
         All parameters are passed directly to the container from the ETL config.
         """
         # Build container arguments from parameters
@@ -66,19 +65,15 @@ def create_pipeline_for_etl(etl_name: str, image: str):
                 command=["python", "src/pipeline.py"],
                 args=arguments,
             )
-        
+
         # Create the task
         task = etl_component()
-        
+
         # Set resource limits using KFP v2 API
         task.set_cpu_limit(config["compute"]["cpu"])
         task.set_memory_limit(config["compute"]["memory"])
-        
+
         # Set retry policy
-        task.set_retry(
-            num_retries=2,
-            backoff_duration="60s",
-            backoff_factor=2.0
-        )
+        task.set_retry(num_retries=2, backoff_duration="60s", backoff_factor=2.0)
 
     return dynamic_pipeline
