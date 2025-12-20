@@ -1,5 +1,7 @@
 name: Deploy ETL to Vertex AI
 
+run-name: Deploy ${{ inputs.etl_name }} to ${{ inputs.environment }}
+
 on:
   workflow_dispatch:
     inputs:
@@ -22,8 +24,8 @@ on:
         default: 'latest'
 
 jobs:
-  deploy:
-    name: Deploy ${{ inputs.etl_name }} to ${{ inputs.environment }}
+  build:
+    name: Build & Push Docker Image
     runs-on: ubuntu-latest
     
     # Required for Workload Identity Federation
@@ -31,9 +33,8 @@ jobs:
       contents: write
       id-token: write
     
-    # Require manual approval from repository owner
-    environment: 
-      name: ${{ inputs.environment }}
+    outputs:
+      image_name: ${{ steps.build.outputs.image_name }}
     
     steps:
       - name: Checkout code
@@ -73,7 +74,8 @@ jobs:
           gcloud auth configure-docker
           gcloud auth configure-docker us-docker.pkg.dev
       
-      - name: Build Docker Image
+      - name: Build and Push Docker Image
+        id: build
         run: |
           cd etls/${{ inputs.etl_name }}
           
@@ -81,14 +83,56 @@ jobs:
           IMAGE_NAME=$(echo "${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_PROJECT}/${{ inputs.etl_name }}:${{ inputs.tag }}" | tr '[:upper:]' '[:lower:]')
           
           docker build -t "${IMAGE_NAME}" .
-          
-          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
           echo "✅ Docker image built successfully"
-      
-      - name: Push Docker Image
-        run: |
+          
           docker push "${IMAGE_NAME}"
           echo "✅ Docker image pushed successfully"
+          
+          # Set output for next job
+          echo "image_name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+
+  deploy:
+    name: Deploy to Vertex AI
+    runs-on: ubuntu-latest
+    needs: build
+    
+    # Required for Workload Identity Federation and releases
+    permissions:
+      contents: write
+      id-token: write
+    
+    # Require manual approval from repository owner
+    environment: 
+      name: ${{ inputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+      
+      - name: Set Environment Variables from Secrets
+        run: |
+          echo "GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_ENV
+          echo "GCP_REGION=${{ secrets.GCP_REGION }}" >> $GITHUB_ENV
+          echo "GCP_SERVICE_ACCOUNT=${{ secrets.GCP_SA_EMAIL }}" >> $GITHUB_ENV
+          echo "GCP_BUCKET=${{ secrets.GCP_BUCKET }}" >> $GITHUB_ENV
+          echo "CONTAINER_REGISTRY=${{ secrets.CONTAINER_REGISTRY }}" >> $GITHUB_ENV
+          echo "CONTAINER_REGISTRY_PROJECT=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_ENV
       
       - name: Install deployment dependencies
         run: |
@@ -100,7 +144,7 @@ jobs:
           poetry run python scripts/deploy.py \
             --etl-name ${{ inputs.etl_name }} \
             --environment ${{ inputs.environment }} \
-            --image "${IMAGE_NAME}"
+            --image "${{ needs.build.outputs.image_name }}"
       
       - name: Deployment Summary
         run: |
@@ -108,7 +152,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**ETL:** ${{ inputs.etl_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** ${IMAGE_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** ${{ needs.build.outputs.image_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** ${{ inputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The ETL has been deployed to Vertex AI and scheduled according to its configuration." >> $GITHUB_STEP_SUMMARY

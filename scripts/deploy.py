@@ -12,7 +12,11 @@ import yaml
 from google.cloud import aiplatform
 from kfp import compiler
 
-from kubeflow.pipelines.base_pipeline import create_pipeline_for_etl
+# Add project root to Python path to import kubeflow module
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+from kubeflow.pipelines.base_pipeline import create_pipeline_for_etl  # noqa: E402
 
 
 def load_etl_config(etl_name: str) -> dict:
