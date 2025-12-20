@@ -5,9 +5,9 @@ Unit tests for myfirstETL pipeline
 import pandas as pd
 import pytest
 
-from src.pipeline import extract_data, load_data, transform_data
-from src.transforms import normalize_column, remove_outliers, standardize_column
-from src.utils import format_size, validate_config
+from pipeline import transform_data
+from transforms import normalize_column, remove_outliers, standardize_column
+from utils import format_size, validate_config
 
 
 def test_validate_config():

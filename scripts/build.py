@@ -9,8 +9,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import yaml
-
 
 def load_env_config(environment: str) -> dict:
     """Load configuration from environment variables"""
@@ -22,7 +20,7 @@ def load_env_config(environment: str) -> dict:
             f"Missing required environment variables: {', '.join(missing_vars)}\n"
             f"See SECURITY.md for configuration details."
         )
-    
+
     return {
         "environment": environment,
         "container_registry": {
@@ -87,7 +85,7 @@ def push_image(image_name: str):
         image_name: Full image name with registry
     """
     print("\n" + "=" * 70)
-    print(f"Pushing image to registry")
+    print("Pushing image to registry")
     print("=" * 70)
 
     try:

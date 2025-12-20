@@ -4,13 +4,13 @@ Dynamic pipeline creation based on ETL configuration
 """
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 from kfp import dsl
 
 
-def load_etl_config(etl_name: str) -> Dict[str, Any]:
+def load_etl_config(etl_name: str) -> dict[str, Any]:
     """
     Load ETL configuration from resources/config.yaml
 
@@ -74,9 +74,7 @@ def create_pipeline_for_etl(etl_name: str, image: str):
         etl_task = etl_task.set_memory_limit(config["compute"]["memory"])
 
         # Add retry policy
-        etl_task = etl_task.set_retry(
-            num_retries=2, backoff_duration="60s", backoff_factor=2.0
-        )
+        etl_task = etl_task.set_retry(num_retries=2, backoff_duration="60s", backoff_factor=2.0)
 
         # Set timeout if specified
         if "timeout" in config["compute"]:
@@ -88,4 +86,3 @@ def create_pipeline_for_etl(etl_name: str, image: str):
     dynamic_pipeline.__defaults__ = tuple(default_params.values())
 
     return dynamic_pipeline
-

@@ -22,10 +22,13 @@ def list_etls():
 
     etls = []
     for item in etls_dir.iterdir():
-        if item.is_dir() and not item.name.startswith("."):
-            # Check if it has required files
-            if (item / "pyproject.toml").exists() and (item / "resources" / "config.yaml").exists():
-                etls.append(item.name)
+        if (
+            item.is_dir()
+            and not item.name.startswith(".")
+            and (item / "pyproject.toml").exists()
+            and (item / "resources" / "config.yaml").exists()
+        ):
+            etls.append(item.name)
 
     return sorted(etls)
 

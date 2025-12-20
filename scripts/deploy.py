@@ -36,14 +36,14 @@ def load_env_config(environment: str) -> dict:
         "CONTAINER_REGISTRY",
         "CONTAINER_REGISTRY_PROJECT",
     ]
-    
+
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
         raise ValueError(
             f"Missing required environment variables: {', '.join(missing_vars)}\n"
             f"See SECURITY.md for configuration details."
         )
-    
+
     # Build config from environment variables
     config = {
         "environment": environment,
@@ -61,18 +61,16 @@ def load_env_config(environment: str) -> dict:
             "project": os.getenv("CONTAINER_REGISTRY_PROJECT"),
         },
     }
-    
+
     return config
 
 
 def get_pipeline_function(etl_name: str, image: str):
     """
     Create pipeline function dynamically from ETL config
-    
     Args:
         etl_name: Name of the ETL
         image: Docker image URI
-        
     Returns:
         Pipeline function
     """
@@ -136,7 +134,7 @@ def deploy_pipeline(
     print("\nSubmitting pipeline job...")
     job.submit(service_account=env_config["gcp"]["service_account"])
 
-    print(f"\n✅ Pipeline job submitted!")
+    print("\n✅ Pipeline job submitted!")
     print(f"Job Name: {job.display_name}")
     print(f"Job URL:  {job._dashboard_uri()}")
 

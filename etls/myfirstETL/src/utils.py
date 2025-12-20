@@ -2,8 +2,6 @@
 Utility functions for myfirstETL
 """
 
-from typing import Any
-
 
 def validate_config(config: dict) -> bool:
     """
