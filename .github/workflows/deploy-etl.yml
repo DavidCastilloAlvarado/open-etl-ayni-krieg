@@ -153,13 +153,15 @@ jobs:
           if [ -f "$PIPELINE_FILE" ]; then
             echo "Uploading pipeline to KFP Artifact Registry..."
             VERSION=$(date -u +"%Y%m%d-%H%M%S")
+            
+            # Upload to KFP repository
             gcloud artifacts files upload \
               --location=${GCP_REGION} \
               --repository=$KFP_REPO \
               --source="$PIPELINE_FILE" \
-              --package=${{ inputs.etl_name }} \
-              --version=$VERSION \
+              --file="${{ inputs.etl_name }}/${VERSION}/pipeline.json" \
               --quiet || echo "⚠️  Pipeline upload to registry failed (non-blocking)"
+            
             echo "✅ Pipeline version $VERSION uploaded to Artifact Registry"
           fi
       
