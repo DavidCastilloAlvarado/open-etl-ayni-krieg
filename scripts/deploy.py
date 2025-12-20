@@ -127,10 +127,6 @@ def deploy_pipeline(
         display_name=f"{etl_name}-{environment}",
         template_path=pipeline_path,
         pipeline_root=env_config["vertex_ai"]["pipeline_root"],
-        parameter_values={
-            **etl_config.get("parameters", {}),
-            "image": image_name,
-        },
         enable_caching=False,
     )
 
