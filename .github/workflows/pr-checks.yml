@@ -3,11 +3,6 @@ name: PR Checks - Ruff Linting
 on:
   pull_request:
     branches: [main, develop]
-    paths:
-      - '**.py'
-      - 'pyproject.toml'
-      - 'etls/**/pyproject.toml'
-      - '.github/workflows/pr-checks.yml'
 
 jobs:
   lint-root:
