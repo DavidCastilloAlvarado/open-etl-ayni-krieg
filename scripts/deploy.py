@@ -137,14 +137,25 @@ def deploy_pipeline(
     print(f"Job Name: {job.display_name}")
     print(f"Job URL:  {job._dashboard_uri()}")
 
-    # Create schedule
+    # Create or update schedule
     if "schedule" in etl_config:
-        print(f"\nCreating schedule: {etl_config['schedule']}")
+        schedule_name = f"{etl_name}-schedule-{environment}"
+        print(f"\nManaging schedule: {etl_config['schedule']}")
 
         try:
+            # Delete existing schedules with the same display name
+            existing_schedules = aiplatform.PipelineJobSchedule.list(
+                filter=f'display_name="{schedule_name}"'
+            )
+            
+            for existing_schedule in existing_schedules:
+                print(f"Deleting existing schedule: {existing_schedule.resource_name}")
+                existing_schedule.delete()
+            
+            # Create new schedule
             schedule = aiplatform.PipelineJobSchedule(
                 pipeline_job=job,
-                display_name=f"{etl_name}-schedule-{environment}",
+                display_name=schedule_name,
             )
 
             schedule.create(
@@ -158,8 +169,8 @@ def deploy_pipeline(
             print(f"Schedule Name: {schedule.display_name}")
 
         except Exception as e:
-            print(f"⚠️  Warning: Could not create schedule: {e}", file=sys.stderr)
-            print("You may need to create the schedule manually.")
+            print(f"⚠️  Warning: Could not manage schedule: {e}", file=sys.stderr)
+            print("You may need to manage the schedule manually.")
 
     print("\n" + "=" * 70)
     print("Deployment completed successfully!")
