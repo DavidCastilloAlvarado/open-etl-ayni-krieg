@@ -1,0 +1,15 @@
+name: myfirstETL
+description: "Daily ETL with pandas and scikit-learn"
+schedule: "0 8 * * *"  # Daily at 8am UTC
+
+compute:
+  cpu: "4"
+  memory: "16Gi"
+  timeout: "3600"  # 1 hour
+
+parameters:
+  input_path: "gs://my-bucket/input/data.csv"
+  output_path: "gs://my-bucket/output/processed.csv"
+
+# GCP settings are inherited from environment config (config/dev.yaml or config/prod.yaml)
+# No need to specify project_id, region, or service_account here
