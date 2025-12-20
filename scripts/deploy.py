@@ -194,7 +194,8 @@ def main():
         env_config = load_env_config(args.environment)
         registry = env_config["container_registry"]["registry"]
         project = env_config["container_registry"]["project"]
-        args.image = f"{registry}/{project}/{args.etl_name.lower()}:latest"
+        # Convert entire image name to lowercase for Docker compatibility
+        args.image = f"{registry}/{project}/{args.etl_name}:latest".lower()
 
     # Pipeline output path
     pipeline_path = f"/tmp/{args.etl_name}_pipeline.json"
