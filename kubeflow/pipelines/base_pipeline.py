@@ -58,10 +58,8 @@ def create_pipeline_for_etl(etl_name: str, image: str):
             if key != "image":  # Skip image parameter
                 arguments.extend([f"--{key.replace('_', '-')}", str(value)])
 
-        # Create ETL task using KFP v2 syntax
-        from kfp.dsl import container_component
-        
-        @container_component
+        # Create ETL task using KFP v2 container component
+        @dsl.container_component
         def etl_component():
             return dsl.ContainerSpec(
                 image=image,
@@ -69,20 +67,18 @@ def create_pipeline_for_etl(etl_name: str, image: str):
                 args=arguments,
             )
         
-        # Create and configure the task
-        etl_task = etl_component()
-        etl_task.set_cpu_limit(config["compute"]["cpu"])
-        etl_task.set_memory_limit(config["compute"]["memory"])
-        etl_task.set_retry(
+        # Create the task
+        task = etl_component()
+        
+        # Set resource limits using KFP v2 API
+        task.set_cpu_limit(config["compute"]["cpu"])
+        task.set_memory_limit(config["compute"]["memory"])
+        
+        # Set retry policy
+        task.set_retry(
             num_retries=2,
             backoff_duration="60s",
             backoff_factor=2.0
         )
-
-        # Set timeout if specified
-        if "timeout" in config["compute"]:
-            etl_task.set_timeout(config["compute"]["timeout"])
-
-        return etl_task
 
     return dynamic_pipeline
