@@ -37,9 +37,6 @@ jobs:
     environment: 
       name: ${{ inputs.environment }}
     
-    outputs:
-      image_name: ${{ steps.build.outputs.image_name }}
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -79,7 +76,6 @@ jobs:
           gcloud auth configure-docker us-docker.pkg.dev
       
       - name: Build and Push Docker Image
-        id: build
         run: |
           cd etls/${{ inputs.etl_name }}
           
@@ -91,9 +87,6 @@ jobs:
           
           docker push "${IMAGE_NAME}"
           echo "✅ Docker image pushed successfully"
-          
-          # Set output for next job
-          echo "image_name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
 
   deploy:
     name: Deploy to Vertex AI
@@ -144,19 +137,24 @@ jobs:
       
       - name: Deploy to Vertex AI
         run: |
+          # Construct image name (must be in deploy job to access secrets)
+          IMAGE_NAME=$(echo "${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_PROJECT}/${{ inputs.etl_name }}:${{ inputs.tag }}" | tr '[:upper:]' '[:lower:]')
+          
           echo "Deploying ${{ inputs.etl_name }} to Vertex AI (${{ inputs.environment }})"
           poetry run python scripts/deploy.py \
             --etl-name ${{ inputs.etl_name }} \
             --environment ${{ inputs.environment }} \
-            --image "${{ needs.build.outputs.image_name }}"
+            --image "${IMAGE_NAME}"
       
       - name: Deployment Summary
         run: |
+          # Construct image name for summary
+          IMAGE_NAME=$(echo "${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_PROJECT}/${{ inputs.etl_name }}:${{ inputs.tag }}" | tr '[:upper:]' '[:lower:]')
+          
           echo "## Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**ETL:** ${{ inputs.etl_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** ${{ needs.build.outputs.image_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** ${{ inputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The ETL has been deployed to Vertex AI and scheduled according to its configuration." >> $GITHUB_STEP_SUMMARY
