@@ -3,6 +3,7 @@ Main pipeline for myfirstETL
 ETL process using pandas and scikit-learn
 """
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -99,10 +100,12 @@ def run_etl(input_path: str = None, output_path: str = None):
 
 
 if __name__ == "__main__":
-    # Support CLI arguments
-    if len(sys.argv) > 1:
-        input_arg = sys.argv[1] if len(sys.argv) > 1 else None
-        output_arg = sys.argv[2] if len(sys.argv) > 2 else None
-        run_etl(input_arg, output_arg)
-    else:
-        run_etl()
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="myfirstETL pipeline")
+    parser.add_argument("--input-path", type=str, help="Path to input data")
+    parser.add_argument("--output-path", type=str, help="Path to output data")
+    
+    args = parser.parse_args()
+    
+    # Run ETL with provided arguments
+    run_etl(input_path=args.input_path, output_path=args.output_path)

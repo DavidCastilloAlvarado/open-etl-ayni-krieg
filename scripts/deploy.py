@@ -100,7 +100,6 @@ def deploy_pipeline(
     etl_name: str,
     environment: str,
     pipeline_path: str,
-    image_name: str,
 ):
     """Deploy pipeline to Vertex AI"""
     print("\n" + "=" * 70)
@@ -205,7 +204,7 @@ def main():
         compile_pipeline(args.etl_name, args.image, pipeline_path)
 
     # Deploy to Vertex AI
-    deploy_pipeline(args.etl_name, args.environment, pipeline_path, args.image)
+    deploy_pipeline(args.etl_name, args.environment, pipeline_path)
 
 
 if __name__ == "__main__":

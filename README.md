@@ -388,6 +388,11 @@ gcloud projects add-iam-policy-binding ${YOUR_PROJECT_ID} \
 gcloud projects add-iam-policy-binding ${YOUR_PROJECT_ID} \
     --member="serviceAccount:${SA_EMAIL}" \
     --role="roles/artifactregistry.createOnPushWriter"
+
+# Grant service account impersonation (required for Vertex AI pipeline execution)
+gcloud iam service-accounts add-iam-policy-binding ${SA_EMAIL} \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/iam.serviceAccountUser"
 ```
 
 #### 8. Link Service Account to Workload Identity Pool
