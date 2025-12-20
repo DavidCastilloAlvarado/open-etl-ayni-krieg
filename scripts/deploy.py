@@ -125,7 +125,7 @@ def deploy_pipeline(
     job = aiplatform.PipelineJob(
         display_name=f"{etl_name}-{environment}",
         template_path=pipeline_path,
-        pipeline_root=env_config["vertex_ai"]["pipeline_root"],
+        pipeline_root=f"{env_config['vertex_ai']['pipeline_root']}/{etl_name}",
         enable_caching=False,
     )
 
