@@ -299,40 +299,109 @@ CONTAINER_REGISTRY              # Container registry (default: gcr.io)
 ✅ **Secrets are managed in GitHub** and injected at runtime  
 ✅ **Zero sensitive data in version control**
 
-### Setting up Workload Identity Federation
+### Creating WIF_PROVIDER and GCP_SA_EMAIL
+
+These two values are required for keyless authentication between GitHub Actions and Google Cloud.
+
+#### 1. Set Environment Variables
 
 ```bash
-# Create service account
-gcloud iam service-accounts create vertex-ai-deployer \
-    --display-name="Vertex AI Deployer"
+export YOUR_PROJECT_ID=$(gcloud config get-value project)
+export YOUR_PROJECT_NUMBER=$(gcloud projects describe ${YOUR_PROJECT_ID} --format="value(projectNumber)")
+export YOUR_GITHUB_REPO="YOUR-USERNAME/YOUR-REPO"  # e.g., "DavidCastilloAlvarado/open-etl-ayni-krieg"
+```
 
-# Grant permissions
-gcloud projects add-iam-policy-binding YOUR-PROJECT \
-    --member="serviceAccount:vertex-ai-deployer@YOUR-PROJECT.iam.gserviceaccount.com" \
-    --role="roles/aiplatform.admin"
+#### 2. Enable Required APIs
 
-gcloud projects add-iam-policy-binding YOUR-PROJECT \
-    --member="serviceAccount:vertex-ai-deployer@YOUR-PROJECT.iam.gserviceaccount.com" \
-    --role="roles/storage.admin"
+```bash
+gcloud services enable iamcredentials.googleapis.com
+gcloud services enable sts.googleapis.com
+```
 
-# Create Workload Identity Pool
-gcloud iam workload-identity-pools create "github-pool" \
+#### 3. Create Workload Identity Pool
+
+```bash
+gcloud iam workload-identity-pools create github-pool \
     --location="global" \
     --display-name="GitHub Actions Pool"
+```
 
-# Create provider
-gcloud iam workload-identity-pools providers create-oidc "github-provider" \
+#### 4. Create OIDC Provider with Repository Restriction
+
+```bash
+gcloud iam workload-identity-pools providers create-oidc github-provider \
     --location="global" \
     --workload-identity-pool="github-pool" \
     --issuer-uri="https://token.actions.githubusercontent.com" \
-    --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository"
-
-# Allow GitHub to impersonate service account
-gcloud iam service-accounts add-iam-policy-binding \
-    vertex-ai-deployer@YOUR-PROJECT.iam.gserviceaccount.com \
-    --role="roles/iam.workloadIdentityUser" \
-    --member="principalSet://iam.googleapis.com/projects/PROJECT-NUMBER/locations/global/workloadIdentityPools/github-pool/attribute.repository/YOUR-GITHUB-USER/myetlsopensource"
+    --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+    --attribute-condition="assertion.repository=='${YOUR_GITHUB_REPO}'"
 ```
+
+#### 5. Get WIF_PROVIDER Value
+
+```bash
+gcloud iam workload-identity-pools providers describe github-provider \
+    --location="global" \
+    --workload-identity-pool="github-pool" \
+    --format="value(name)"
+```
+
+**Output (save this as `WIF_PROVIDER` secret):**
+```
+projects/${YOUR_PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+```
+
+#### 6. Create Service Account
+
+```bash
+gcloud iam service-accounts create vertex-ai-etl \
+    --display-name="Vertex AI ETL Service Account" \
+    --description="Service account for ETL deployments to Vertex AI"
+```
+
+**The service account email (save this as `GCP_SA_EMAIL` secret):**
+```
+vertex-ai-etl@${YOUR_PROJECT_ID}.iam.gserviceaccount.com
+```
+
+#### 7. Grant Permissions to Service Account - easy admin on storage
+
+```bash
+export SA_EMAIL="vertex-ai-etl@${YOUR_PROJECT_ID}.iam.gserviceaccount.com"
+
+# Grant Vertex AI permissions
+gcloud projects add-iam-policy-binding ${YOUR_PROJECT_ID} \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/aiplatform.user"
+
+# Grant Cloud Storage permissions
+gcloud projects add-iam-policy-binding ${YOUR_PROJECT_ID} \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/storage.admin"
+```
+
+#### 8. Link Service Account to Workload Identity Pool
+
+```bash
+gcloud iam service-accounts add-iam-policy-binding ${SA_EMAIL} \
+    --member="principalSet://iam.googleapis.com/projects/${YOUR_PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-pool/attribute.repository/${YOUR_GITHUB_REPO}" \
+    --role="roles/iam.workloadIdentityUser"
+```
+
+#### 9. Add to GitHub Secrets
+
+Go to your GitHub repository **Settings** → **Secrets and variables** → **Actions** and add:
+
+- `WIF_PROVIDER`: `projects/${YOUR_PROJECT_NUMBER}/locations/global/workloadIdentityPools/github-pool/providers/github-provider`
+- `GCP_SA_EMAIL`: `vertex-ai-etl@${YOUR_PROJECT_ID}.iam.gserviceaccount.com`
+
+#### Cost Information
+
+**Workload Identity Federation is completely free:**
+- ✅ No charges for creating pools or providers
+- ✅ No charges for token exchanges
+- ✅ No charges for authentication requests
+- ✅ You only pay for the actual GCP resources you use (Vertex AI, Storage, etc.)
 
 ## 📊 Monitoring
 
