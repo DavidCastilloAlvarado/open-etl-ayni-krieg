@@ -1,0 +1,114 @@
+name: PR Checks - Ruff Linting
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - 'etls/**/pyproject.toml'
+      - '.github/workflows/pr-checks.yml'
+
+jobs:
+  lint-root:
+    name: Lint Root Project
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Install dependencies
+        run: poetry install
+      
+      - name: Run Ruff on root project
+        run: poetry run poe ruff
+
+  lint-etls:
+    name: Lint ETL Projects
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Lint all ETLs
+        run: |
+          for etl_dir in etls/*/; do
+            if [ -f "$etl_dir/pyproject.toml" ]; then
+              echo "=========================================="
+              echo "Linting $(basename $etl_dir)"
+              echo "=========================================="
+              cd "$etl_dir"
+              poetry install
+              poetry run poe ruff || exit 1
+              cd ../..
+            fi
+          done
+
+  validate-configs:
+    name: Validate ETL Configurations
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install PyYAML
+        run: pip install pyyaml
+      
+      - name: Validate ETL configs
+        run: python .github/scripts/validate_etl_configs.py
+
+  test-etls:
+    name: Test ETL Projects
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.0
+      
+      - name: Test all ETLs
+        run: |
+          for etl_dir in etls/*/; do
+            if [ -f "$etl_dir/pyproject.toml" ]; then
+              echo "=========================================="
+              echo "Testing $(basename $etl_dir)"
+              echo "=========================================="
+              cd "$etl_dir"
+              poetry install
+              poetry run poe test || exit 1
+              cd ../..
+            fi
+          done
