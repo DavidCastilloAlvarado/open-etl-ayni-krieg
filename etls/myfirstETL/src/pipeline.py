@@ -4,7 +4,6 @@ ETL process using pandas and scikit-learn
 """
 
 import argparse
-import sys
 from pathlib import Path
 
 import pandas as pd
@@ -104,8 +103,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="myfirstETL pipeline")
     parser.add_argument("--input-path", type=str, help="Path to input data")
     parser.add_argument("--output-path", type=str, help="Path to output data")
-    
+
     args = parser.parse_args()
-    
+
     # Run ETL with provided arguments
     run_etl(input_path=args.input_path, output_path=args.output_path)

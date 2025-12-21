@@ -127,31 +127,37 @@ def filter_and_agg_violent_deaths(df: pd.DataFrame) -> pd.DataFrame:
     """).df()
     return result
 
+
 def render_year_trend_and_change(result: pd.DataFrame) -> None:
     # Aggregate data by year
-    yearly_data = result.groupby("ANIO").agg({
-        "total_homicidios": "sum",
-        "gunshot_homicidios": "sum"
-    }).reset_index()
+    yearly_data = (
+        result.groupby("ANIO")
+        .agg({"total_homicidios": "sum", "gunshot_homicidios": "sum"})
+        .reset_index()
+    )
 
     yearly_data = yearly_data.sort_values("ANIO")
 
     # Calculate year-over-year percentage change for total homicides
     yearly_data["yoy_change"] = yearly_data["total_homicidios"].pct_change() * 100
     yearly_data["yoy_text"] = yearly_data.apply(
-        lambda row: f"+{row['yoy_change']:.1f}%" if row["yoy_change"] > 0
-        else f"{row['yoy_change']:.1f}%" if pd.notna(row["yoy_change"])
+        lambda row: f"+{row['yoy_change']:.1f}%"
+        if row["yoy_change"] > 0
+        else f"{row['yoy_change']:.1f}%"
+        if pd.notna(row["yoy_change"])
         else "",
-        axis=1
+        axis=1,
     )
 
     # Calculate year-over-year percentage change for gunshot homicides
     yearly_data["gunshot_yoy_change"] = yearly_data["gunshot_homicidios"].pct_change() * 100
     yearly_data["gunshot_yoy_text"] = yearly_data.apply(
-        lambda row: f"+{row['gunshot_yoy_change']:.1f}%" if row["gunshot_yoy_change"] > 0
-        else f"{row['gunshot_yoy_change']:.1f}%" if pd.notna(row["gunshot_yoy_change"])
+        lambda row: f"+{row['gunshot_yoy_change']:.1f}%"
+        if row["gunshot_yoy_change"] > 0
+        else f"{row['gunshot_yoy_change']:.1f}%"
+        if pd.notna(row["gunshot_yoy_change"])
         else "",
-        axis=1
+        axis=1,
     )
 
     # Create the figure
@@ -173,35 +179,56 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
             yoy_val = yearly_data.iloc[i]["yoy_change"]
             yoy_text = yearly_data.iloc[i]["yoy_text"]
             color = "#E74C3C" if yoy_val > 0 else "#3498DB"
-            ax.text(year + 0, val + 150, yoy_text, ha="center", va="center",
-                fontsize=10, color="white", weight="bold",
-                bbox={"boxstyle": "round,pad=0.3", "facecolor": color, "edgecolor": color})
+            ax.text(
+                year + 0,
+                val + 150,
+                yoy_text,
+                ha="center",
+                va="center",
+                fontsize=10,
+                color="white",
+                weight="bold",
+                bbox={"boxstyle": "round,pad=0.3", "facecolor": color, "edgecolor": color},
+            )
 
     # Line chart for gunshot homicides
     ax2 = ax
-    _ = ax2.plot(years, gunshot_hom +2200, color="black", linewidth=3, marker="o",
-                    markersize=8, label="Por Arma de Fuego")
+    _ = ax2.plot(
+        years,
+        gunshot_hom + 2200,
+        color="black",
+        linewidth=3,
+        marker="o",
+        markersize=8,
+        label="Por Arma de Fuego",
+    )
 
     # Add values on the line
     for i, (year, val) in enumerate(zip(years, gunshot_hom, strict=False)):
-        ax2.text(year, val + 2250, str(val), ha="center", va="bottom",
-                fontsize=10, color="black")
+        ax2.text(year, val + 2250, str(val), ha="center", va="bottom", fontsize=10, color="black")
 
         # Add YoY change for gunshot homicides
         if pd.notna(yearly_data.iloc[i]["gunshot_yoy_change"]):
             yoy_val = yearly_data.iloc[i]["gunshot_yoy_change"]
             yoy_text = yearly_data.iloc[i]["gunshot_yoy_text"]
             color = "#E74C3C" if yoy_val > 0 else "#3498DB"
-            ax2.text(year + 0, val + 2400, yoy_text, ha="center", va="center",
-                    fontsize=10, color="white", weight="bold",
-                    bbox={"boxstyle": "round,pad=0.3", "facecolor": color, "edgecolor": color})
+            ax2.text(
+                year + 0,
+                val + 2400,
+                yoy_text,
+                ha="center",
+                va="center",
+                fontsize=10,
+                color="white",
+                weight="bold",
+                bbox={"boxstyle": "round,pad=0.3", "facecolor": color, "edgecolor": color},
+            )
 
     # Labels and title
     ax.set_xlabel("Año", fontsize=12)
     ax.set_ylabel("Cantidad de Homicidios", fontsize=12)
     ax2.set_ylabel("Homicidios por Arma de Fuego", fontsize=12)
-    ax.set_title("Tendencias Anuales de Homicidios en Perú (Datos SINADEF)",
-                fontsize=16, pad=20)
+    ax.set_title("Tendencias Anuales de Homicidios en Perú (Datos SINADEF)", fontsize=16, pad=20)
 
     # Set x-axis to show all years
     ax.set_xticks(years)
@@ -216,7 +243,7 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
     ax.grid(axis="y", alpha=0.3, linestyle="--")
 
     plt.tight_layout()
-    #plt.show()
+    # plt.show()
     # Save the figure
     plt.savefig("data/homicidios_trends.png", dpi=200)
     plt.close()

@@ -1,7 +1,7 @@
-
 import argparse
 import logging
 import os
+import signal
 import sys
 from pathlib import Path
 
@@ -87,12 +87,12 @@ def load_data(df: pd.DataFrame, output_path: str):
     """
     # Save locally first
     local_path = "data/homicidios_detallado.csv"
-    os.makedirs('data', exist_ok=True)
+    os.makedirs("data", exist_ok=True)
     df.to_csv(local_path, index=False)
     logging.info(f"Saved locally: {local_path}")
 
     # Upload to GCS if output_path is a GCS path
-    if output_path.startswith('gs://'):
+    if output_path.startswith("gs://"):
         upload_to_gcs(local_path, output_path)
 
     logging.info(f"ETL completed: {len(df)} rows processed")
@@ -134,8 +134,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="sinadef analysis pipeline")
     parser.add_argument("--input-path", type=str, help="Path to input data")
     parser.add_argument("--output-path", type=str, help="Path to output data")
+    parser.add_argument("--timeout", type=int, help="Timeout in seconds")
 
     args = parser.parse_args()
 
-    # Run ETL with provided arguments
-    run_etl(input_path=args.input_path, output_path=args.output_path)
+    # Set timeout if provided
+    if args.timeout:
+
+        def timeout_handler(signum, frame):
+            raise TimeoutError(f"ETL execution exceeded timeout of {args.timeout} seconds")
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(args.timeout)
+        logging.info(f"Timeout set to {args.timeout} seconds")
+
+    try:
+        # Run ETL with provided arguments
+        run_etl(input_path=args.input_path, output_path=args.output_path)
+    finally:
+        if args.timeout:
+            signal.alarm(0)  # Disable alarm
