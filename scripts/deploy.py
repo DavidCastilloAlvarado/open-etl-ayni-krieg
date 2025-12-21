@@ -147,11 +147,11 @@ def deploy_pipeline(
             existing_schedules = aiplatform.PipelineJobSchedule.list(
                 filter=f'display_name="{schedule_name}"'
             )
-            
+
             for existing_schedule in existing_schedules:
                 print(f"Deleting existing schedule: {existing_schedule.resource_name}")
                 existing_schedule.delete()
-            
+
             # Create new schedule
             schedule = aiplatform.PipelineJobSchedule(
                 pipeline_job=job,
