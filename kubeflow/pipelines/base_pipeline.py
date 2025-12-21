@@ -79,6 +79,11 @@ def create_pipeline_for_etl(etl_name: str, image: str):
         task.set_cpu_limit(config["compute"]["cpu"])
         task.set_memory_limit(config["compute"]["memory"])
 
+        # Set timeout if configured
+        if "timeout" in config["compute"]:
+            timeout_seconds = int(config["compute"]["timeout"])
+            task.set_timeout(seconds=timeout_seconds)
+
         # Set retry policy
         task.set_retry(num_retries=config["retry"]["max_retries"],
                        backoff_duration=config["retry"]["backoff_duration"],

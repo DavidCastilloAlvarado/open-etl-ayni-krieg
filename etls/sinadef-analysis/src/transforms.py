@@ -3,8 +3,9 @@ Data transformation functions for myfirstETL
 """
 
 import duckdb
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import pandas as pd
-import plotly.graph_objects as go
 
 
 def select_and_clean_columns(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -143,9 +144,6 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
         else "",
         axis=1
     )
-    yearly_data["yoy_color"] = yearly_data["yoy_change"].apply(
-        lambda x: "#E74C3C" if x > 0 else "#3498DB" if pd.notna(x) else "black"
-    )
 
     # Calculate year-over-year percentage change for gunshot homicides
     yearly_data["gunshot_yoy_change"] = yearly_data["gunshot_homicidios"].pct_change() * 100
@@ -155,98 +153,70 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
         else "",
         axis=1
     )
-    yearly_data["gunshot_yoy_color"] = yearly_data["gunshot_yoy_change"].apply(
-        lambda x: "#E74C3C" if x > 0 else "#3498DB" if pd.notna(x) else "black"
-    )
 
     # Create the figure
-    fig = go.Figure()
+    fig, ax = plt.subplots(figsize=(12, 8))
 
-    # Add bar chart for total homicides
-    fig.add_trace(go.Bar(
-        x=yearly_data["ANIO"],
-        y=yearly_data["total_homicidios"],
-        name="Homicidios Totales",
-        text=yearly_data["total_homicidios"],
-        textposition="outside",
-        textfont={"size": 12, "color": "#2C3E50"},
-        marker_color="#E67E22",
-        opacity=0.8
-    ))
+    years = yearly_data["ANIO"].values
+    total_hom = yearly_data["total_homicidios"].values
+    gunshot_hom = yearly_data["gunshot_homicidios"].values
 
-    # Add line chart for gunshot homicides
-    fig.add_trace(go.Scatter(
-        x=yearly_data["ANIO"],
-        y=yearly_data["gunshot_homicidios"]+2400,
-        name="Por Arma de Fuego",
-        mode="lines+markers+text",
-        line={"color": "black", "width": 3},
-        marker={"size": 8, "color": "black"},
-        text=yearly_data["gunshot_homicidios"],
-        textposition="top center",
-        textfont={"size": 11, "color": "black"},
-    ))
+    # Bar chart for total homicides
+    _ = ax.bar(years, total_hom, color="#E67E22", alpha=0.8, label="Homicidios Totales")
 
-    # Add year-over-year change annotations for total homicides
-    for _, row in yearly_data.iterrows():
-        if pd.notna(row["yoy_change"]):
-            fig.add_annotation(
-                x=row["ANIO"],
-                y=row["total_homicidios"],
-                text=row["yoy_text"],
-                showarrow=False,
-                xshift=45,
-                yshift=15,
-                font={"size": 12, "color": "white", "family": "Arial Black"},
-                bgcolor=row["yoy_color"],
-                bordercolor=row["yoy_color"],
-                borderwidth=1,
-                borderpad=3
-            )
+    # Add values on top of bars
+    for i, (year, val) in enumerate(zip(years, total_hom, strict=False)):
+        ax.text(year, val, str(val), ha="center", va="bottom", fontsize=10, color="#2C3E50")
 
-    # Add year-over-year change annotations for gunshot homicides
-    for _, row in yearly_data.iterrows():
-        if pd.notna(row["gunshot_yoy_change"]):
-            fig.add_annotation(
-                x=row["ANIO"],
-                y=row["gunshot_homicidios"]+2550,
-                text=row["gunshot_yoy_text"],
-                showarrow=False,
-                xshift=45,
-                yshift=0,
-                font={"size": 12, "color": "white", "family": "Arial Black"},
-                bgcolor=row["gunshot_yoy_color"],
-                bordercolor=row["gunshot_yoy_color"],
-                borderwidth=1,
-                borderpad=3
-            )
+        # Add YoY change for total homicides
+        if pd.notna(yearly_data.iloc[i]["yoy_change"]):
+            yoy_val = yearly_data.iloc[i]["yoy_change"]
+            yoy_text = yearly_data.iloc[i]["yoy_text"]
+            color = "#E74C3C" if yoy_val > 0 else "#3498DB"
+            ax.text(year + 0, val + 150, yoy_text, ha="center", va="center",
+                fontsize=10, color="white", weight="bold",
+                bbox={"boxstyle": "round,pad=0.3", "facecolor": color, "edgecolor": color})
 
-    # Update layout
-    fig.update_layout(
-        title={
-            "text": "Tendencias Anuales de Homicidios en Perú (Datos SINADEF)",
-            "font": {"size": 22}
-        },
-        xaxis_title="Año",
-        yaxis_title="Cantidad de Homicidios",
-        xaxis={
-            "tickmode": "linear",
-            "tick0": yearly_data["ANIO"].min(),
-            "dtick": 1
-        },
-        legend={
-            "orientation": "h",
-            "yanchor": "bottom",
-            "y": 1.02,
-            "xanchor": "right",
-            "x": 1
-        },
-        hovermode="x unified",
-        template="plotly_white",
-        height=600,
-        showlegend=True
-    )
-    # fig.show()
+    # Line chart for gunshot homicides
+    ax2 = ax
+    _ = ax2.plot(years, gunshot_hom +2200, color="black", linewidth=3, marker="o",
+                    markersize=8, label="Por Arma de Fuego")
+
+    # Add values on the line
+    for i, (year, val) in enumerate(zip(years, gunshot_hom, strict=False)):
+        ax2.text(year, val + 2250, str(val), ha="center", va="bottom",
+                fontsize=10, color="black")
+
+        # Add YoY change for gunshot homicides
+        if pd.notna(yearly_data.iloc[i]["gunshot_yoy_change"]):
+            yoy_val = yearly_data.iloc[i]["gunshot_yoy_change"]
+            yoy_text = yearly_data.iloc[i]["gunshot_yoy_text"]
+            color = "#E74C3C" if yoy_val > 0 else "#3498DB"
+            ax2.text(year + 0, val + 2400, yoy_text, ha="center", va="center",
+                    fontsize=10, color="white", weight="bold",
+                    bbox={"boxstyle": "round,pad=0.3", "facecolor": color, "edgecolor": color})
+
+    # Labels and title
+    ax.set_xlabel("Año", fontsize=12)
+    ax.set_ylabel("Cantidad de Homicidios", fontsize=12)
+    ax2.set_ylabel("Homicidios por Arma de Fuego", fontsize=12)
+    ax.set_title("Tendencias Anuales de Homicidios en Perú (Datos SINADEF)",
+                fontsize=16, pad=20)
+
+    # Set x-axis to show all years
+    ax.set_xticks(years)
+    ax.set_xticklabels(years, rotation=0)
+    ax.set_ylim(0, 3000)
+    # Legend
+    bars_patch = mpatches.Patch(color="#E67E22", alpha=0.8, label="Homicidios Totales")
+    line_patch = mpatches.Patch(color="black", label="Por Arma de Fuego")
+    ax.legend(handles=[bars_patch, line_patch], loc="upper left", fontsize=10)
+
+    # Grid
+    ax.grid(axis="y", alpha=0.3, linestyle="--")
+
+    plt.tight_layout()
+    #plt.show()
     # Save the figure
-    #fig.write_html("data/homicidios_trends.html")
-    fig.write_image("data/homicidios_trends.png", width=1200, height=600, scale=2)
+    plt.savefig("data/homicidios_trends.png", dpi=200)
+    plt.close()
