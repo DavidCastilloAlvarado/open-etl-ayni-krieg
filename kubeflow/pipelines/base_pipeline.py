@@ -10,7 +10,6 @@ from typing import Any
 import yaml
 from jinja2 import StrictUndefined, Template
 from kfp import dsl
-from kfp import kubernetes
 
 
 def load_etl_config(etl_name: str) -> dict[str, Any]:
@@ -64,6 +63,10 @@ def create_pipeline_for_etl(etl_name: str, image: str):
                     value = template.render(**os.environ)
                 arguments.extend([f"--{key.replace('_', '-')}", str(value)])
 
+        # Add timeout argument if configured
+        if "timeout" in config["compute"]:
+            arguments.extend(["--timeout", str(config["compute"]["timeout"])])
+
         # Create ETL task using KFP v2 container component
         @dsl.container_component
         def etl_component():
@@ -80,15 +83,11 @@ def create_pipeline_for_etl(etl_name: str, image: str):
         task.set_cpu_limit(config["compute"]["cpu"])
         task.set_memory_limit(config["compute"]["memory"])
 
-        # Set timeout if configured
-        if "timeout" in config["compute"]:
-            timeout_seconds = int(config["compute"]["timeout"])
-            kubernetes.set_timeout(task, timeout_seconds)
-            #task.set_timeout(seconds=timeout_seconds)
-
         # Set retry policy
-        task.set_retry(num_retries=config["retry"]["max_retries"],
-                       backoff_duration=config["retry"]["backoff_duration"],
-                       backoff_factor=config["retry"]["backoff_factor"])
+        task.set_retry(
+            num_retries=config["retry"]["max_retries"],
+            backoff_duration=config["retry"]["backoff_duration"],
+            backoff_factor=config["retry"]["backoff_factor"],
+        )
 
     return dynamic_pipeline
