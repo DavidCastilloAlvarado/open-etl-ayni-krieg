@@ -9,7 +9,7 @@ import pandas as pd
 import requests
 import yaml
 
-from transforms import filter_and_agg_violent_deaths, select_and_clean_columns
+from transforms import filter_and_agg_violent_deaths, select_and_clean_columns, render_year_trend_and_change
 from utils import upload_to_gcs
 
 
@@ -113,6 +113,7 @@ def run_etl(input_path: str = None, output_path: str = None):
     # ETL Process
     df_raw = extract_data(input_path)
     df = transform_data(df_raw)
+    render_year_trend_and_change(df)
     load_data(df, output_path)
     logging.info("ETL completed successfully!")
 
