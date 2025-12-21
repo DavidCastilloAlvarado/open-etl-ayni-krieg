@@ -12,6 +12,6 @@ parameters:
   output_path: "gs://{{ GCP_BUCKET }}/data/homicidios_detallado.csv"
 
 retry:
-  max_retries: 2
+  max_retries: 1
   backoff_duration: 300s  # 5 minutes
   backoff_factor: 2
