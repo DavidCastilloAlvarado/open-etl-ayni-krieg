@@ -3,10 +3,12 @@ Base pipeline utilities for Kubeflow
 Dynamic pipeline creation based on ETL configuration
 """
 
+import os
 from pathlib import Path
 from typing import Any
 
 import yaml
+from jinja2 import StrictUndefined, Template
 from kfp import dsl
 
 
@@ -55,6 +57,10 @@ def create_pipeline_for_etl(etl_name: str, image: str):
         arguments = []
         for key, value in default_params.items():
             if key != "image":  # Skip image parameter
+                # Render template if value contains {{ }}
+                if isinstance(value, str) and "{{" in value and "}}" in value:
+                    template = Template(value, undefined=StrictUndefined)
+                    value = template.render(**os.environ)
                 arguments.extend([f"--{key.replace('_', '-')}", str(value)])
 
         # Create ETL task using KFP v2 container component
@@ -74,6 +80,8 @@ def create_pipeline_for_etl(etl_name: str, image: str):
         task.set_memory_limit(config["compute"]["memory"])
 
         # Set retry policy
-        task.set_retry(num_retries=2, backoff_duration="60s", backoff_factor=2.0)
+        task.set_retry(num_retries=config["retry"]["max_retries"],
+                       backoff_duration=config['retry']['backoff_duration'],
+                       backoff_factor=config["retry"]["backoff_factor"])
 
     return dynamic_pipeline
