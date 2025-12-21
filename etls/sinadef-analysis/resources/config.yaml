@@ -1,6 +1,6 @@
 name: sinadef-analysis
 description: "ETL to analyze Sinadef data from datasabiertos.gob.pe"
-schedule: "0 9 * * *"  # Daily at 8am UTC
+schedule: "0 14 * * *"  # Daily at 9am UTC-5
 
 compute:
   cpu: "4"
