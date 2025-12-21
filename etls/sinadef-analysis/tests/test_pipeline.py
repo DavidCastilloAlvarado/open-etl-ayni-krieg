@@ -1,6 +1,7 @@
 """
 Unit tests for pipeline
 """
+
 import pytest
 
 from utils import validate_config
