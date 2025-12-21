@@ -1,7 +1,3 @@
-"""
-Main pipeline for myfirstETL
-ETL process using pandas and scikit-learn
-"""
 
 import argparse
 import logging
@@ -27,7 +23,6 @@ def load_config():
 def extract_data(input_path: str) -> pd.DataFrame:
     """
     Extract data from source
-
     Args:
         input_path: Path to input CSV file
 
@@ -107,7 +102,7 @@ def run_etl(input_path: str = None, output_path: str = None):
         input_path: Optional input path (overrides config)
         output_path: Optional output path (overrides config)
     """
-    logging.info("Starting myfirstETL")
+    logging.info("Starting Sinadef Analysis ETL")
     # Load configuration
     config = load_config()
 
@@ -131,7 +126,7 @@ if __name__ == "__main__":
     )
 
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="myfirstETL pipeline")
+    parser = argparse.ArgumentParser(description="sinadef analysis pipeline")
     parser.add_argument("--input-path", type=str, help="Path to input data")
     parser.add_argument("--output-path", type=str, help="Path to output data")
 

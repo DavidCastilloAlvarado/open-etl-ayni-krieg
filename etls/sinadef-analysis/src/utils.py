@@ -1,6 +1,4 @@
-"""
-Utility functions for myfirstETL
-"""
+
 import logging
 
 from google.cloud import storage
