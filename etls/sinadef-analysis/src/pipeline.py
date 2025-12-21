@@ -9,7 +9,11 @@ import pandas as pd
 import requests
 import yaml
 
-from transforms import filter_and_agg_violent_deaths, select_and_clean_columns, render_year_trend_and_change
+from transforms import (
+    filter_and_agg_violent_deaths,
+    render_year_trend_and_change,
+    select_and_clean_columns,
+)
 from utils import upload_to_gcs
 
 

@@ -138,9 +138,9 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
     # Calculate year-over-year percentage change for total homicides
     yearly_data["yoy_change"] = yearly_data["total_homicidios"].pct_change() * 100
     yearly_data["yoy_text"] = yearly_data.apply(
-        lambda row: f"+{row['yoy_change']:.1f}%" if row["yoy_change"] > 0 
-        else f"{row['yoy_change']:.1f}%" if pd.notna(row["yoy_change"]) 
-        else "", 
+        lambda row: f"+{row['yoy_change']:.1f}%" if row["yoy_change"] > 0
+        else f"{row['yoy_change']:.1f}%" if pd.notna(row["yoy_change"])
+        else "",
         axis=1
     )
     yearly_data["yoy_color"] = yearly_data["yoy_change"].apply(
@@ -150,9 +150,9 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
     # Calculate year-over-year percentage change for gunshot homicides
     yearly_data["gunshot_yoy_change"] = yearly_data["gunshot_homicidios"].pct_change() * 100
     yearly_data["gunshot_yoy_text"] = yearly_data.apply(
-        lambda row: f"+{row['gunshot_yoy_change']:.1f}%" if row["gunshot_yoy_change"] > 0 
-        else f"{row['gunshot_yoy_change']:.1f}%" if pd.notna(row["gunshot_yoy_change"]) 
-        else "", 
+        lambda row: f"+{row['gunshot_yoy_change']:.1f}%" if row["gunshot_yoy_change"] > 0
+        else f"{row['gunshot_yoy_change']:.1f}%" if pd.notna(row["gunshot_yoy_change"])
+        else "",
         axis=1
     )
     yearly_data["gunshot_yoy_color"] = yearly_data["gunshot_yoy_change"].apply(
@@ -169,7 +169,7 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
         name="Homicidios Totales",
         text=yearly_data["total_homicidios"],
         textposition="outside",
-        textfont=dict(size=12, color="#2C3E50"),
+        textfont={"size": 12, "color": "#2C3E50"},
         marker_color="#E67E22",
         opacity=0.8
     ))
@@ -180,15 +180,15 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
         y=yearly_data["gunshot_homicidios"]+2400,
         name="Por Arma de Fuego",
         mode="lines+markers+text",
-        line=dict(color="black", width=3),
-        marker=dict(size=8, color="black"),
+        line={"color": "black", "width": 3},
+        marker={"size": 8, "color": "black"},
         text=yearly_data["gunshot_homicidios"],
         textposition="top center",
-        textfont=dict(size=11, color="black"),
+        textfont={"size": 11, "color": "black"},
     ))
 
     # Add year-over-year change annotations for total homicides
-    for idx, row in yearly_data.iterrows():
+    for _, row in yearly_data.iterrows():
         if pd.notna(row["yoy_change"]):
             fig.add_annotation(
                 x=row["ANIO"],
@@ -197,7 +197,7 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
                 showarrow=False,
                 xshift=45,
                 yshift=15,
-                font=dict(size=12, color="white", family="Arial Black"),
+                font={"size": 12, "color": "white", "family": "Arial Black"},
                 bgcolor=row["yoy_color"],
                 bordercolor=row["yoy_color"],
                 borderwidth=1,
@@ -205,7 +205,7 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
             )
 
     # Add year-over-year change annotations for gunshot homicides
-    for idx, row in yearly_data.iterrows():
+    for _, row in yearly_data.iterrows():
         if pd.notna(row["gunshot_yoy_change"]):
             fig.add_annotation(
                 x=row["ANIO"],
@@ -214,7 +214,7 @@ def render_year_trend_and_change(result: pd.DataFrame) -> None:
                 showarrow=False,
                 xshift=45,
                 yshift=0,
-                font=dict(size=12, color="white", family="Arial Black"),
+                font={"size": 12, "color": "white", "family": "Arial Black"},
                 bgcolor=row["gunshot_yoy_color"],
                 bordercolor=row["gunshot_yoy_color"],
                 borderwidth=1,
