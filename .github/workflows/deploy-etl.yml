@@ -10,6 +10,7 @@ on:
         required: true
         type: choice
         options:
+          - sinadef-analysis
           - myfirstETL
       environment:
         description: 'Target environment'

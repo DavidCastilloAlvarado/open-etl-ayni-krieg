@@ -1,0 +1,49 @@
+[tool.poetry]
+name = "sinadef-analysis"
+version = "0.1.0"
+description = "ETL to analyze Sinadef data from datasabiertos.gob.pe https://www.datosabiertos.gob.pe/dataset/informaci%C3%B3n-de-fallecidos-del-sistema-inform%C3%A1tico-nacional-de-defunciones-sinadef-ministerio"
+authors = ["David Castillo"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "^2.2.0"
+scikit-learn = "^1.5.0"
+google-cloud-storage = "^2.18.0"
+pyyaml = "^6.0.1"
+duckdb = "^1.4.3"
+pyarrow = "^22.0.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.8.4"
+poethepoet = "^0.29.0"
+pytest = "^8.3.0"
+jupyterlab = "^4.5.1"
+
+[tool.poe.tasks]
+ruff.shell = "ruff check src/ tests/ && ruff format src/ tests/"
+ruff_fix.shell = "ruff check src/ tests/ --fix"
+run = "python src/pipeline.py"
+test = "pytest tests/"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+fix = true
+exclude = [".git", ".venv", "__pycache__", "*.egg-info", "*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "N", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

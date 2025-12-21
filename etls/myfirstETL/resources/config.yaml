@@ -11,5 +11,7 @@ parameters:
   input_path: "gs://my-bucket/input/data.csv"
   output_path: "gs://my-bucket/output/processed.csv"
 
-# GCP settings are inherited from environment config (config/dev.yaml or config/prod.yaml)
-# No need to specify project_id, region, or service_account here
+retry:
+  max_retries: 2
+  backoff_duration: 300s  # 5 minutes
+  backoff_factor: 2

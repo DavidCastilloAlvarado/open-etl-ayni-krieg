@@ -1,0 +1,17 @@
+name: sinadef-analysis
+description: "ETL to analyze Sinadef data from datasabiertos.gob.pe"
+schedule: "0 9 * * *"  # Daily at 8am UTC
+
+compute:
+  cpu: "4"
+  memory: "16Gi"
+  timeout: "3600"  # 1 hour
+
+parameters:
+  input_path: "https://files.minsa.gob.pe/s/Ae52gBAMf9aKEzK/download/SINADEF_DATOS_ABIERTOS.csv"
+  output_path: "gs://{{ GCP_BUCKET }}/data/homicidios_detallado.csv"
+
+retry:
+  max_retries: 1
+  backoff_duration: 300s  # 5 minutes
+  backoff_factor: 2
