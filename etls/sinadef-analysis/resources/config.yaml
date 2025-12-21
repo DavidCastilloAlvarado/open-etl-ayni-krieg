@@ -9,7 +9,9 @@ compute:
 
 parameters:
   input_path: "https://files.minsa.gob.pe/s/Ae52gBAMf9aKEzK/download/SINADEF_DATOS_ABIERTOS.csv"
-  output_path: "gs://my-bucket/output/processed.csv"
+  output_path: "gs://{{ GCP_BUCKET }}/data/homicidios_detallado.csv"
 
-# GCP settings are inherited from environment config (config/dev.yaml or config/prod.yaml)
-# No need to specify project_id, region, or service_account here
+retry:
+  max_retries: 2
+  backoff_duration: 300s  # 5 minutes
+  backoff_factor: 2
