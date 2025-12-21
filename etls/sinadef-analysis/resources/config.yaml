@@ -1,0 +1,15 @@
+name: sinadef-analysis
+description: "ETL to analyze Sinadef data from datasabiertos.gob.pe"
+schedule: "0 9 * * *"  # Daily at 8am UTC
+
+compute:
+  cpu: "4"
+  memory: "16Gi"
+  timeout: "3600"  # 1 hour
+
+parameters:
+  input_path: "https://files.minsa.gob.pe/s/Ae52gBAMf9aKEzK/download/SINADEF_DATOS_ABIERTOS.csv"
+  output_path: "gs://my-bucket/output/processed.csv"
+
+# GCP settings are inherited from environment config (config/dev.yaml or config/prod.yaml)
+# No need to specify project_id, region, or service_account here

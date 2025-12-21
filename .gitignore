@@ -26,6 +26,9 @@ venv/
 ENV/
 env/
 
+# data
+data/
+
 # Environment variables
 .env
 .env.local
@@ -66,3 +69,4 @@ Thumbs.db
 *.json
 !**/config/*.json
 credentials/
+playground.ipynb
