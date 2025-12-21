@@ -10,6 +10,7 @@ on:
         required: true
         type: choice
         options:
+          - sinadef-analysis
           - myfirstETL
       environment:
         description: 'Target environment'
@@ -63,6 +64,7 @@ jobs:
           echo "GCP_REGION=${{ secrets.GCP_REGION }}" >> $GITHUB_ENV
           echo "GCP_SERVICE_ACCOUNT=${{ secrets.GCP_SA_EMAIL }}" >> $GITHUB_ENV
           echo "GCP_BUCKET=${{ secrets.GCP_BUCKET }}" >> $GITHUB_ENV
+          echo "GCP_SINADEF_ANALYSIS_BUCKET=${{ vars.GCP_SINADEF_ANALYSIS_BUCKET }}" >> $GITHUB_ENV
           echo "CONTAINER_REGISTRY=${{ secrets.CONTAINER_REGISTRY }}" >> $GITHUB_ENV
           echo "CONTAINER_REGISTRY_PROJECT=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_ENV
       
@@ -128,6 +130,7 @@ jobs:
           echo "GCP_REGION=${{ secrets.GCP_REGION }}" >> $GITHUB_ENV
           echo "GCP_SERVICE_ACCOUNT=${{ secrets.GCP_SA_EMAIL }}" >> $GITHUB_ENV
           echo "GCP_BUCKET=${{ secrets.GCP_BUCKET }}" >> $GITHUB_ENV
+          echo "GCP_SINADEF_ANALYSIS_BUCKET=${{ vars.GCP_SINADEF_ANALYSIS_BUCKET }}" >> $GITHUB_ENV
           echo "CONTAINER_REGISTRY=${{ secrets.CONTAINER_REGISTRY }}" >> $GITHUB_ENV
           echo "CONTAINER_REGISTRY_PROJECT=${{ secrets.GCP_PROJECT_ID }}" >> $GITHUB_ENV
       
