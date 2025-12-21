@@ -14,6 +14,7 @@ import requests
 import yaml
 
 from transforms import filter_and_agg_violent_deaths, select_and_clean_columns
+from utils import upload_to_gcs
 
 
 def load_config():
@@ -83,9 +84,18 @@ def load_data(df: pd.DataFrame, output_path: str):
     Load transformed data to destination
     Args:
         df: Transformed DataFrame
-        output_path: Path to output CSV file
+        output_path: Path to GCS location (gs://bucket/path/file.csv) or local path
     """
-    df.to_csv("data/homicidios_detallado.csv", index=False)
+    # Save locally first
+    local_path = "data/homicidios_detallado.csv"
+    os.makedirs('data', exist_ok=True)
+    df.to_csv(local_path, index=False)
+    logging.info(f"Saved locally: {local_path}")
+
+    # Upload to GCS if output_path is a GCS path
+    if output_path.startswith('gs://'):
+        upload_to_gcs(local_path, output_path)
+
     logging.info(f"ETL completed: {len(df)} rows processed")
 
 
