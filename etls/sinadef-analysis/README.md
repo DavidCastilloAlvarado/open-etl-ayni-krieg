@@ -2,6 +2,14 @@
 
 ETL pipeline for analyzing Peru death records from SINADEF (Sistema Informático Nacional de Defunciones). Downloads 600MB+ dataset from MINSA, categorizes homicides by weapon type using DuckDB SQL queries, and uploads results to Google Cloud Storage.
 
+## Dashboard
+
+📊 **[View Interactive Dashboard →](https://lookerstudio.google.com/reporting/60c8a004-b760-427d-a44f-a1d1990bad0d/page/5fQjF)**
+
+The dashboard displays daily processed homicide data from this ETL pipeline, updated automatically.
+
+![Homicide Trends](doc/homicidios_trends.png)
+
 ## Overview
 
 **Data Source**: [MINSA - SINADEF Datos Abiertos](https://www.datosabiertos.gob.pe/dataset/informaci%C3%B3n-de-fallecidos-del-sistema-inform%C3%A1tico-nacional-de-defunciones-sinadef-ministerio)
