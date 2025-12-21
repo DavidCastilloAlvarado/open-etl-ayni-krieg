@@ -81,7 +81,7 @@ def create_pipeline_for_etl(etl_name: str, image: str):
 
         # Set retry policy
         task.set_retry(num_retries=config["retry"]["max_retries"],
-                       backoff_duration=config['retry']['backoff_duration'],
+                       backoff_duration=config["retry"]["backoff_duration"],
                        backoff_factor=config["retry"]["backoff_factor"])
 
     return dynamic_pipeline
