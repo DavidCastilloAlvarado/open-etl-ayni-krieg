@@ -10,6 +10,7 @@ from typing import Any
 import yaml
 from jinja2 import StrictUndefined, Template
 from kfp import dsl
+from kfp import kubernetes
 
 
 def load_etl_config(etl_name: str) -> dict[str, Any]:
@@ -82,7 +83,8 @@ def create_pipeline_for_etl(etl_name: str, image: str):
         # Set timeout if configured
         if "timeout" in config["compute"]:
             timeout_seconds = int(config["compute"]["timeout"])
-            task.set_timeout(seconds=timeout_seconds)
+            kubernetes.set_timeout(task, timeout_seconds)
+            #task.set_timeout(seconds=timeout_seconds)
 
         # Set retry policy
         task.set_retry(num_retries=config["retry"]["max_retries"],
